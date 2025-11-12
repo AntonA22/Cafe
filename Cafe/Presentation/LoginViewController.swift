@@ -47,56 +47,38 @@ final class LoginViewController: UIViewController {
         let supabase = SupabaseService.shared.client
             
         Task {
-            do {
-                let supabase = SupabaseService.shared.client
-                
-                let response = try await supabase
-                    .from("users_swift")
-                    .select()
-                    .eq("username", value: username)
-                    .execute()
-                
-                let users = try JSONDecoder().decode([User].self, from: response.data)
-
-                guard let user = users.first else {
-                    print("Пользователь не найден")
-                    return
+                do {
+                    let response = try await supabase.auth.signUp(
+                        email: username,
+                        password: password
+                    )
+                    
+                    let user = response.user
+                    print("Login successful! User ID: \(user.id), Email: \(user.email ?? "no email")")
+                    
+                    // Здесь можно перейти на следующий экран
+                    // Переход на главный экран
+                    DispatchQueue.main.async {
+                        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                        if let mainVC = storyboard.instantiateViewController(withIdentifier: "MainWindowViewController") as? MainWindowViewController {
+                            
+                            // Делаем главный экран корневым
+                            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+                               let window = sceneDelegate.window {
+                                
+                                window.rootViewController = mainVC
+                                UIView.transition(with: window,
+                                                  duration: 0.3,
+                                                  options: .transitionFlipFromRight,
+                                                  animations: nil)
+                            }
+                        }
+                    }
+                } catch {
+                    // Ошибка Supabase (неверный пароль, нет подключения и т.д.)
+                    print("Ошибка при логине:", error.localizedDescription)
                 }
-
-                if user.password == password {
-                    print("Успешный вход!")
-                } else {
-                    print("Неверный пароль")
-                }
-                
-            } catch {
-                print("Ошибка supabase:", error)
-            }
         }
-        
-        
-//            guard let email = loginInput.text, !email.isEmpty,
-//                  let password = passInput.text, !password.isEmpty else {
-//                print("Поля пустые")
-//                return
-//            }
-//
-//            let url = URL(string: "https://cafe.com/api/login")!
-//            var request = URLRequest(url: url)
-//            request.httpMethod = "POST"
-//            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//
-//            let body = LoginRequest(email: email, password: password)
-//            request.httpBody = try? JSONEncoder().encode(body)
-//
-//            URLSession.shared.dataTask(with: request) { data, response, error in
-//
-//                if let error = error {
-//                    print("Ошибка сети:", error)
-//                    return
-//                }
-//
-//            }.resume()
     }
     
     // MARK: - Lifecycle

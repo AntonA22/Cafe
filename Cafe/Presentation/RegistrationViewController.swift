@@ -17,6 +17,12 @@ struct UserInsert: Codable {
     let password: String
 }
 
+struct ProfileInsert: Codable {
+    let email: String
+    let name: String
+    let password: String
+}
+
 final class RegistrationViewController: UIViewController {
     
     // MARK: - IBOutlet
@@ -43,50 +49,35 @@ final class RegistrationViewController: UIViewController {
         }
 
         let supabase = SupabaseService.shared.client
-        let body = UserInsert(
-            username: login,
-            email: email,
-            name: name,
-            password: p1
-        )
+        
         Task {
             do {
-                let response = try await supabase
-                    .from("users_swift")
-                    .insert(body)
-                    .execute()
+                let response = try await supabase.auth.signUp(
+                    email: email,
+                    password: p1,
+                    data: [
+                        "name": .string(name),
+                      ]
+                )
+                
+                let user = response.user
+                print("Registration successful! User ID: \(user.id), Email: \(user.email ?? "no email"), Name: \(user.userMetadata["name"]?.stringValue ?? "no name")")
+                
+                let profile = ProfileInsert(
+                    email: email,
+                    name: name,
+                    password: p1
+                )
 
-                print("Пользователь создан", response)
+                try await supabase
+                       .from("users_swift")
+                       .insert(profile)       // Передаём Encodable объект
+                       .execute()
 
             } catch {
                 print("Ошибка при создании:", error)
             }
         }
-//            guard let login = loginInput.text, !login.isEmpty,
-//                  let email = email_input.text, !email.isEmpty,
-//                  let name = nameInput.text, !name.isEmpty,
-//                  let p1 = passInput1.text, !p1.isEmpty,
-//                  let p2 = passInput2.text, !p2.isEmpty else {
-//                print("Поля пустые")
-//                return
-//            }
-//            
-//            let body = RegistrationRequest(login: login, email: email, name: name, password1: p1, password2: p2)
-//            
-//            let url = URL(string: "https://cafe.com/api/register")!
-//            var request = URLRequest(url: url)
-//            request.httpMethod = "POST"
-//            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//            request.httpBody = try? JSONEncoder().encode(body)
-//            
-//            URLSession.shared.dataTask(with: request) { data, response, error in
-//                
-//                if let error = error {
-//                    print("Ошибка сети:", error)
-//                    return
-//                }
-//                
-//            }.resume()
     }
     
     // MARK: - Lifecycle

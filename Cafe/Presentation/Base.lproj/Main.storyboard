@@ -356,6 +356,34 @@
             </objects>
             <point key="canvasLocation" x="860" y="54"/>
         </scene>
+        <!--MainWindow View Controller-->
+        <scene sceneID="sPN-Oy-49k">
+            <objects>
+                <viewController storyboardIdentifier="MainWindowViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="dnq-Tc-wfR" userLabel="MainWindow View Controller" customClass="MainWindowViewController" customModule="Cafe" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="q7Q-4u-2xc">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" text="Пользователи:" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Zre-Nk-qSQ">
+                                <rect key="frame" x="16" y="69" width="361" height="262"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="0.66666666669999997" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="9Qg-tp-NfA"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
+                    <connections>
+                        <outlet property="textView" destination="Zre-Nk-qSQ" id="bZn-Qv-FLI"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="vo9-Hn-cp7" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1745.8015267175572" y="53.521126760563384"/>
+        </scene>
     </scenes>
     <resources>
         <namedColor name="YP White">

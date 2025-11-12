@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		69324CC52EB7BA3A005906C1 /* RegistrationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69324CC42EB7BA35005906C1 /* RegistrationViewController.swift */; };
+		697AC8672EC4D3EF00316CBD /* MainWindowViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */; };
 		69ACD87F2EBBA6190032C695 /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69ACD87E2EBBA6150032C695 /* Supabase.swift */; };
 		69ACD8822EBBA7C00032C695 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 69ACD8812EBBA7C00032C695 /* Auth */; };
 		69ACD8842EBBA7C00032C695 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 69ACD8832EBBA7C00032C695 /* Functions */; };
@@ -40,6 +41,7 @@
 
 /* Begin PBXFileReference section */
 		69324CC42EB7BA35005906C1 /* RegistrationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationViewController.swift; sourceTree = "<group>"; };
+		697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowViewController.swift; sourceTree = "<group>"; };
 		69ACD87E2EBBA6150032C695 /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		69EEC5612EAE25C00019CA67 /* YS Display-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "YS Display-Bold.ttf"; sourceTree = "<group>"; };
 		69EEC5622EAE25C00019CA67 /* YS Display-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "YS Display-Medium.ttf"; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 		8F4738322848DE2A005DF65E /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */,
 				69ACD87E2EBBA6150032C695 /* Supabase.swift */,
 				AD1ABAB52831907B00B3E448 /* LoginViewController.swift */,
 				69324CC42EB7BA35005906C1 /* RegistrationViewController.swift */,
@@ -254,6 +257,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AD5EE5DE284D7887003966EF /* UIColor+Extensions.swift in Sources */,
+				697AC8672EC4D3EF00316CBD /* MainWindowViewController.swift in Sources */,
 				AD7AFA552836189F00399704 /* Array+Extensions.swift in Sources */,
 				AD1ABAB62831907B00B3E448 /* LoginViewController.swift in Sources */,
 				AD77F5742857F8810062FB14 /* Date+Extensions.swift in Sources */,
