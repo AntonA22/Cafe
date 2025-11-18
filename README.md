@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 # Cafe
+=======
+Cafe
+>>>>>>> authentication
