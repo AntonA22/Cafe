@@ -47,37 +47,41 @@ final class LoginViewController: UIViewController {
         let supabase = SupabaseService.shared.client
             
         Task {
-                do {
-                    let response = try await supabase.auth.signUp(
-                        email: username,
-                        password: password
-                    )
+            do {
+                let response = try await supabase.auth.signUp(
+                    email: username,
+                    password: password
+                )
+                
+                let user = response.user
+                print("Login successful! User ID: \(user.id), Email: \(user.email ?? "no email")")
+                
+                // Переход на главный экран (Tab Bar Controller)
+                DispatchQueue.main.async {
+                    let storyboard = UIStoryboard(name: "Main", bundle: nil)
                     
-                    let user = response.user
-                    print("Login successful! User ID: \(user.id), Email: \(user.email ?? "no email")")
-                    
-                    // Здесь можно перейти на следующий экран
-                    // Переход на главный экран
-                    DispatchQueue.main.async {
-                        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-                        if let mainVC = storyboard.instantiateViewController(withIdentifier: "MainWindowViewController") as? MainWindowViewController {
+                    // Получаем Tab Bar Controller по Storyboard ID
+                    if let tabBarVC = storyboard.instantiateViewController(withIdentifier: "MainTabBarController") as? UITabBarController {
+                        
+                        // Выбираем первую вкладку
+                        tabBarVC.selectedIndex = 0
+                        
+                        // Делаем Tab Bar Controller корневым
+                        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
+                           let window = sceneDelegate.window {
                             
-                            // Делаем главный экран корневым
-                            if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate,
-                               let window = sceneDelegate.window {
-                                
-                                window.rootViewController = mainVC
-                                UIView.transition(with: window,
-                                                  duration: 0.3,
-                                                  options: .transitionFlipFromRight,
-                                                  animations: nil)
-                            }
+                            window.rootViewController = tabBarVC
+                            UIView.transition(with: window,
+                                              duration: 0.3,
+                                              options: .transitionFlipFromRight,
+                                              animations: nil)
                         }
                     }
-                } catch {
-                    // Ошибка Supabase (неверный пароль, нет подключения и т.д.)
-                    print("Ошибка при логине:", error.localizedDescription)
                 }
+            } catch {
+                // Ошибка Supabase (неверный пароль, нет подключения и т.д.)
+                print("Ошибка при логине:", error.localizedDescription)
+            }
         }
     }
     
