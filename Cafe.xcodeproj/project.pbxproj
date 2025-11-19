@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		69324CC52EB7BA3A005906C1 /* RegistrationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69324CC42EB7BA35005906C1 /* RegistrationViewController.swift */; };
 		695C2EEC2ECCD19400EBEDF7 /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 695C2EEB2ECCD17B00EBEDF7 /* MenuViewController.swift */; };
+		69701FE32ECE1292005DACD8 /* LaravelMenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69701FE22ECE1281005DACD8 /* LaravelMenuViewController.swift */; };
 		697AC8672EC4D3EF00316CBD /* MainWindowViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */; };
 		69917EF42EC9F9B300A40AFE /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 69917EF32EC9F9B300A40AFE /* MapboxMaps */; };
 		69917EF62EC9FA9000A40AFE /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69917EF52EC9FA9000A40AFE /* MapViewController.swift */; };
@@ -45,6 +46,7 @@
 /* Begin PBXFileReference section */
 		69324CC42EB7BA35005906C1 /* RegistrationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationViewController.swift; sourceTree = "<group>"; };
 		695C2EEB2ECCD17B00EBEDF7 /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
+		69701FE22ECE1281005DACD8 /* LaravelMenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaravelMenuViewController.swift; sourceTree = "<group>"; };
 		697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowViewController.swift; sourceTree = "<group>"; };
 		69917EF52EC9FA9000A40AFE /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
 		69ACD87E2EBBA6150032C695 /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 		8F4738322848DE2A005DF65E /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				69701FE22ECE1281005DACD8 /* LaravelMenuViewController.swift */,
 				695C2EEB2ECCD17B00EBEDF7 /* MenuViewController.swift */,
 				697AC8662EC4D3DC00316CBD /* MainWindowViewController.swift */,
 				69ACD87E2EBBA6150032C695 /* Supabase.swift */,
@@ -274,6 +277,7 @@
 				AD77F5742857F8810062FB14 /* Date+Extensions.swift in Sources */,
 				AD1ABAB22831907B00B3E448 /* AppDelegate.swift in Sources */,
 				69ACD87F2EBBA6190032C695 /* Supabase.swift in Sources */,
+				69701FE32ECE1292005DACD8 /* LaravelMenuViewController.swift in Sources */,
 				AD1ABAB42831907B00B3E448 /* SceneDelegate.swift in Sources */,
 				69324CC52EB7BA3A005906C1 /* RegistrationViewController.swift in Sources */,
 			);

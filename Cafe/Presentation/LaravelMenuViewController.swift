@@ -1,13 +1,18 @@
 import UIKit
 import Supabase
+import Foundation
 
-struct MenuItem {
+struct Product: Codable {
+    let id: Int
+    let price: Double
     let name: String
-    let price: Int
-    let imageName: String // название локального изображения в Assets
 }
 
-class MenuCell: UICollectionViewCell {
+struct ProductsResponse: Codable {
+    let data: [Product]
+}
+
+class LaravelMenuCell: UICollectionViewCell {
 
     private let imageView = UIImageView()
     private let titleLabel = UILabel()
@@ -92,12 +97,10 @@ class MenuCell: UICollectionViewCell {
     }
 }
 
-import UIKit
-
-class MenuViewController: UIViewController {
-
+class LaravelMenuViewController: UIViewController {
+    
     private var collectionView: UICollectionView!
-
+    
     // Тут будут данные меню (пока мок)
     var items: [MenuItem] = [
         MenuItem(name: "Капучино", price: 180, imageName: "cappuccino"),
@@ -106,33 +109,54 @@ class MenuViewController: UIViewController {
 //        MenuItem(name: "Чизкейк", price: 320, imageName: "cheesecake")
     ]
     
-    func fetchAllUsers() async {
-        do {
-            items.append(MenuItem(name: "Эклер", price: 240, imageName: "eclair"))
-            // Получаем всех пользователей
-            let response: PostgrestResponse<[Profile]> = try await supabase
-                .from("users_swift")
-                .select()
-                .execute()
-            
-            let users = response.value
-            
-            // Создаём строку для отображения
-            var displayText = ""
-            for user in users {
-                displayText += "User ID: \(user.id)\nEmail: \(user.email)\nName: \(user.name)\n\n"
-                items.append(MenuItem(name: user.name, price: 100, imageName: "eclair"))
-            }
-            
-            DispatchQueue.main.async {
-                self.collectionView.reloadData()
-            }
-            
-        } catch {
+    func fetchLaravelProducts() async {
+           print("fetching laravel users")
+           let url = URL(string: "http://localhost:8000/products")! // ← Use localhost here
+           print(url)
+           
+           var request = URLRequest(url: url)
+           request.httpMethod = "GET"
+           request.setValue("application/json", forHTTPHeaderField: "Accept")
+           
+           let task = URLSession.shared.dataTask(with: request) { data, response, error in
+               if let error = error {
+                   print("Error: \(error)")
+                   return
+               }
+               
+               if let httpResponse = response as? HTTPURLResponse {
+                   print("Status code: \(httpResponse.statusCode)")
+               }
+               var displayText = ""
+               if let data = data {
+                   
+                   do {
+                       // Декодируем данные в массив продуктов
+                       let productsResponse = try JSONDecoder().decode(ProductsResponse.self, from: data)
+                       let products = productsResponse.data
+                              for product in products {
+                                  displayText += "ID: \(product.id) \nName: \(product.name) \nPrice: \(product.price)\n\n"
+                                  print("ID: \(product.id), Name: \(product.name), Price: \(product.price)")
+                                  self.items.append(MenuItem(name: product.name, price: Int(product.price), imageName: "eclair"))
+                              }
+                               } catch {
+                                   print("JSON parsing error: \(error)")
+                               }
+                   
+                  
+                   
+                   // Обновляем UI на главном потоке
+                   DispatchQueue.main.async {
+                       self.collectionView.reloadData()
+                   }
+                   print("Data received: \(String(data: data, encoding: .utf8) ?? "Unable to parse")")
+               }
+           }
+           task.resume() // ← Don't forget to call resume()!
+       }
 
-        }
-    }
-
+    
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Меню"
@@ -142,10 +166,10 @@ class MenuViewController: UIViewController {
         setupCollection()
         
         Task {
-            await fetchAllUsers()
+            await fetchLaravelProducts()
         }
     }
-
+    
     private func setupCollection() {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: view.frame.width/2 - 20, height: 180)
@@ -155,14 +179,14 @@ class MenuViewController: UIViewController {
         collectionView.backgroundColor = .white
         collectionView.dataSource = self
 
-        collectionView.register(MenuCell.self, forCellWithReuseIdentifier: "MenuCell")
+        collectionView.register(LaravelMenuCell.self, forCellWithReuseIdentifier: "LaravelMenuCell")
 
         view.addSubview(collectionView)
         collectionView.frame = view.bounds
     }
 }
 
-extension MenuViewController: UICollectionViewDataSource {
+extension LaravelMenuViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView,
                         numberOfItemsInSection section: Int) -> Int {
         return items.count
@@ -171,7 +195,7 @@ extension MenuViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView,
                         cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
 
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MenuCell", for: indexPath) as! MenuCell
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "LaravelMenuCell", for: indexPath) as! LaravelMenuCell
         cell.configure(item: items[indexPath.row])
         return cell
     }
