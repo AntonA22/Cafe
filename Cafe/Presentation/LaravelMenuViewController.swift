@@ -110,7 +110,7 @@ class LaravelMenuViewController: UIViewController {
     ]
     
     func fetchLaravelProducts() async {
-           print("fetching laravel users")
+           print("fetching laravel users!!!!!")
            let url = URL(string: "http://localhost:8000/products")! // ← Use localhost here
            print(url)
            
