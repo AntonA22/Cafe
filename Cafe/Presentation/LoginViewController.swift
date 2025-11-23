@@ -1,5 +1,6 @@
 import UIKit
 import Supabase
+import Lottie
 
 struct LoginRequest: Codable {
     let id: Int
@@ -36,6 +37,8 @@ final class LoginViewController: UIViewController {
     @IBOutlet weak var loginInput: UITextField!
     @IBOutlet weak var passInput: UITextField!
     
+    let animationView = LottieAnimationView(name: "LottieLogo1")
+   
     // MARK: - IBAction
     @IBAction func loginClick(_ sender: Any) {
         guard let username = loginInput.text, !username.isEmpty,
@@ -48,11 +51,13 @@ final class LoginViewController: UIViewController {
             
         Task {
             do {
+                setupLottieAnimation()
+                animationView.play()
                 let response = try await supabase.auth.signUp(
                     email: username,
                     password: password
                 )
-                
+                animationView.stop()
                 let user = response.user
                 print("Login successful! User ID: \(user.id), Email: \(user.email ?? "no email")")
                 
@@ -83,7 +88,46 @@ final class LoginViewController: UIViewController {
                 print("Ошибка при логине:", error.localizedDescription)
             }
         }
+        
     }
+    
+    private func setupLottieAnimation() {
+           // Create the title label
+           /*let titleLabel = UILabel()
+           titleLabel.text = ""
+           titleLabel.textAlignment = .center
+           titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .medium)
+           titleLabel.translatesAutoresizingMaskIntoConstraints = false
+           */
+           // Create the Lottie animation view
+        print("trying to set lottie");
+          // let animationView = LottieAnimationView(name: "LottieLogo1")
+           animationView.contentMode = .scaleAspectFit
+           animationView.loopMode = .loop
+           animationView.translatesAutoresizingMaskIntoConstraints = false
+           
+           // Add subviews
+           //view.addSubview(titleLabel)
+           view.addSubview(animationView)
+           
+           // Setup constraints
+           NSLayoutConstraint.activate([
+               // Title label constraints
+            
+              /* titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+               titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+               titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+              */
+               // Animation view constraints
+              // animationView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+               animationView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+               animationView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+               animationView.heightAnchor.constraint(equalTo: animationView.widthAnchor)
+           ])
+           
+           // Play the animation
+          
+       }
     
     // MARK: - Lifecycle
     override func viewDidLoad() {

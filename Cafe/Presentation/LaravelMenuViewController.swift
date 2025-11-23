@@ -28,6 +28,12 @@ class LaravelMenuCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
+        
+        let tappedImageView = sender.view as! UIImageView
+        let imageTag = tappedImageView.tag
+        print("some image tapped \(imageTag)");
+    }
     private func setupUI() {
         layer.cornerRadius = 12
         layer.borderWidth = 1
@@ -35,11 +41,16 @@ class LaravelMenuCell: UICollectionViewCell {
         clipsToBounds = true
         backgroundColor = .white
 
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped )) //cоздали тап детектор
+
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture) //добавили к картинке
         // ImageView
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 12
-
+        imageView.tag=100;
         // Title
         titleLabel.font = .systemFont(ofSize: 14, weight: .regular) // уменьшили и сделали не жирным
         titleLabel.numberOfLines = 3 // позволяем до 3 строк
