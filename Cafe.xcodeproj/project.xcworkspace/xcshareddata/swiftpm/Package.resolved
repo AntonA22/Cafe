@@ -1,6 +1,15 @@
 {
-  "originHash" : "4b7794840a0984dfe38053252b099c3b78715b1f44c86d59d3ab87968cc9159a",
+  "originHash" : "7c84a3ddd736eb0073fe58fb14fed6b14521a3d2d4771a92bb28f15846881520",
   "pins" : [
+    {
+      "identity" : "lottie-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/airbnb/lottie-spm.git",
+      "state" : {
+        "revision" : "04f2fd18cc9404a0a0917265a449002674f24ec9",
+        "version" : "4.5.2"
+      }
+    },
     {
       "identity" : "mapbox-common-ios",
       "kind" : "remoteSourceControl",

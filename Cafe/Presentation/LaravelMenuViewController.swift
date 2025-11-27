@@ -16,7 +16,7 @@ class LaravelMenuCell: UICollectionViewCell {
 
     private let imageView = UIImageView()
     private let titleLabel = UILabel()
-    private let addButton = UIButton(type: .system)
+    private let addToCartButton = UIButton(type: .system)
     private let cartImageView = UIImageView()
 
     override init(frame: CGRect) {
@@ -33,7 +33,55 @@ class LaravelMenuCell: UICollectionViewCell {
         let tappedImageView = sender.view as! UIImageView
         let imageTag = tappedImageView.tag
         print("some image tapped \(imageTag)");
+        
+        fetchProductDetail(id: imageTag);
+        
     }
+    
+    private func fetchProductDetail(id: Int ) {
+        
+        print("fetching laravel users!!!!!")
+        let stringId = String(id) // stringFromInt is "42"
+        let url = URL(string: "http://localhost:8000/product/"+stringId)! // ← Use localhost here
+        print(url)
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error: \(error)")
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Status code: \(httpResponse.statusCode)")
+            }
+            var displayText = ""
+            if let data = data {
+                
+                do {
+                    // Декодируем данные в массив продуктов
+                    let productsResponse = try JSONDecoder().decode(ProductsResponse.self, from: data)
+                    let product = productsResponse.data[0]
+                    print(product)
+                           /*for product in products {
+                               displayText += "ID: \(product.id) \nName: \(product.name) \nPrice: \(product.price)\n\n"
+                               print("ID: \(product.id), Name: \(product.name), Price: \(product.price)")
+                               //self.items.append(MenuItem(id: product.id, name: product.name, price: Int(product.price), imageName: "eclair"))
+                           }*/
+                } catch {
+                    print("JSON parsing error: \(error)")
+                }
+                
+               print("Data received: \(String(data: data, encoding: .utf8) ?? "Unable to parse")")
+            }
+        }
+        task.resume() // ← Don't forget to call resume()!
+        
+    }
+    
     private func setupUI() {
         layer.cornerRadius = 12
         layer.borderWidth = 1
@@ -50,18 +98,18 @@ class LaravelMenuCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 12
-        imageView.tag=100;
+     
         // Title
         titleLabel.font = .systemFont(ofSize: 14, weight: .regular) // уменьшили и сделали не жирным
         titleLabel.numberOfLines = 3 // позволяем до 3 строк
         titleLabel.textAlignment = .center
 
         // Кнопка с ценой
-        addButton.backgroundColor = .systemBlue
-        addButton.tintColor = .white
-        addButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
-        addButton.layer.cornerRadius = 8
-        addButton.contentEdgeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10)
+        addToCartButton.backgroundColor = .systemBlue
+        addToCartButton.tintColor = .white
+        addToCartButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
+        addToCartButton.layer.cornerRadius = 8
+        addToCartButton.contentEdgeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10)
 
         // Иконка корзины справа
         cartImageView.image = UIImage(systemName: "cart.fill")
@@ -75,11 +123,11 @@ class LaravelMenuCell: UICollectionViewCell {
         stack.spacing = 8
 
         contentView.addSubview(stack)
-        contentView.addSubview(addButton)
-        addButton.addSubview(cartImageView)
+        contentView.addSubview(addToCartButton)
+        addToCartButton.addSubview(cartImageView)
 
         stack.translatesAutoresizingMaskIntoConstraints = false
-        addButton.translatesAutoresizingMaskIntoConstraints = false
+        addToCartButton.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 0),
@@ -88,14 +136,14 @@ class LaravelMenuCell: UICollectionViewCell {
 
             imageView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.55),
 
-            addButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 8),
-            addButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            addButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            addButton.heightAnchor.constraint(equalToConstant: 40),
-            addButton.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10),
+            addToCartButton.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 8),
+            addToCartButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            addToCartButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            addToCartButton.heightAnchor.constraint(equalToConstant: 40),
+            addToCartButton.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10),
 
-            cartImageView.trailingAnchor.constraint(equalTo: addButton.trailingAnchor, constant: -8),
-            cartImageView.centerYAnchor.constraint(equalTo: addButton.centerYAnchor),
+            cartImageView.trailingAnchor.constraint(equalTo: addToCartButton.trailingAnchor, constant: -8),
+            cartImageView.centerYAnchor.constraint(equalTo: addToCartButton.centerYAnchor),
             cartImageView.widthAnchor.constraint(equalToConstant: 20),
             cartImageView.heightAnchor.constraint(equalToConstant: 20)
         ])
@@ -103,8 +151,9 @@ class LaravelMenuCell: UICollectionViewCell {
 
     func configure(item: MenuItem) {
         titleLabel.text = item.name
-        addButton.setTitle("\(item.price) ₽", for: .normal)
+        addToCartButton.setTitle("\(item.price) ₽", for: .normal)
         imageView.image = UIImage(named: item.imageName)
+        imageView.tag = item.id;
     }
 }
 
@@ -114,8 +163,8 @@ class LaravelMenuViewController: UIViewController {
     
     // Тут будут данные меню (пока мок)
     var items: [MenuItem] = [
-        MenuItem(name: "Капучино", price: 180, imageName: "cappuccino"),
-        MenuItem(name: "Латте", price: 190, imageName: "latte"),
+       // MenuItem(name: "Капучино", price: 180, imageName: "cappuccino"),
+       // MenuItem(name: "Латте", price: 190, imageName: "latte"),
 //        MenuItem(name: "Эклер", price: 240, imageName: "eclair"),
 //        MenuItem(name: "Чизкейк", price: 320, imageName: "cheesecake")
     ]
@@ -148,7 +197,7 @@ class LaravelMenuViewController: UIViewController {
                               for product in products {
                                   displayText += "ID: \(product.id) \nName: \(product.name) \nPrice: \(product.price)\n\n"
                                   print("ID: \(product.id), Name: \(product.name), Price: \(product.price)")
-                                  self.items.append(MenuItem(name: product.name, price: Int(product.price), imageName: "eclair"))
+                                  self.items.append(MenuItem(id: product.id, name: product.name, price: Int(product.price), imageName: "eclair"))
                               }
                                } catch {
                                    print("JSON parsing error: \(error)")

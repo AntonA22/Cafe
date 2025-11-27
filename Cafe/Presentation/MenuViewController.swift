@@ -2,9 +2,11 @@ import UIKit
 import Supabase
 
 struct MenuItem {
+    let id: Int
     let name: String
     let price: Int
     let imageName: String // название локального изображения в Assets
+   
 }
 
 class MenuCell: UICollectionViewCell {
@@ -100,15 +102,15 @@ class MenuViewController: UIViewController {
 
     // Тут будут данные меню (пока мок)
     var items: [MenuItem] = [
-        MenuItem(name: "Капучино", price: 180, imageName: "cappuccino"),
-        MenuItem(name: "Латте", price: 190, imageName: "latte"),
+//        MenuItem(name: "Капучино", price: 180, imageName: "cappuccino"),
+//        MenuItem(name: "Латте", price: 190, imageName: "latte"),
 //        MenuItem(name: "Эклер", price: 240, imageName: "eclair"),
 //        MenuItem(name: "Чизкейк", price: 320, imageName: "cheesecake")
     ]
     
     func fetchAllUsers() async {
         do {
-            items.append(MenuItem(name: "Эклер", price: 240, imageName: "eclair"))
+           // items.append(MenuItem(name: "Эклер", price: 240, imageName: "eclair"))
             // Получаем всех пользователей
             let response: PostgrestResponse<[Profile]> = try await supabase
                 .from("users_swift")
@@ -121,7 +123,7 @@ class MenuViewController: UIViewController {
             var displayText = ""
             for user in users {
                 displayText += "User ID: \(user.id)\nEmail: \(user.email)\nName: \(user.name)\n\n"
-                items.append(MenuItem(name: user.name, price: 100, imageName: "eclair"))
+                items.append(MenuItem(id: 999999, name: user.name, price: 100, imageName: "eclair"))
             }
             
             DispatchQueue.main.async {
