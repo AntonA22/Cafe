@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cafe — схема проекта и API</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    :root {
+      --bg: #1a1d23;
+      --card: #252830;
+      --text: #e6e9ef;
+      --muted: #9096a5;
+      --accent: #7c9cbf;
+      --border: #3d424d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
+    header {
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 8px; color: var(--text); }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin: 0; }
+    nav {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    nav a:hover { background: #2d313c; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    section h2 {
+      font-size: 1.25rem;
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .mermaid { background: #1e2128; border-radius: 8px; padding: 20px; margin: 16px 0; }
+    .mermaid svg { max-width: 100%; }
+    .flow-text {
+      white-space: pre-wrap;
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; }
+    #swagger-ui .swagger-ui { background: #fff; padding: 20px; border-radius: 8px; }
+    .formats-list { margin: 12px 0; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Cafe — схема проекта и API</h1>
+      <p class="subtitle">Поток данных клиент → сервер и описание API (Swagger)</p>
+      <nav>
+        <a href="#flow">Поток данных</a>
+        <a href="#architecture">Архитектура</a>
+        <a href="#screens">Экраны и API</a>
+        <a href="#api-docs">API (Swagger)</a>
+      </nav>
+    </header>
+
+    <section id="flow">
+      <h2>Поток данных: клиент → сервер</h2>
+      <div class="mermaid">
+flowchart LR
+    subgraph Client["iOS‑клиент (Cafe)"]
+        UI[ViewController]
+        SV[AuthService / CartService / ProductsService / AddressService]
+        API[APIClient]
+        UI --> SV
+        SV --> API
+    end
+    API -->|"HTTPS, JSON, Bearer"| Server[Laravel API]
+    Server -->|JSON 200/401/422| API
+    API --> SV
+    SV --> UI
+      </div>
+      <div class="mermaid">
+sequenceDiagram
+    participant V as ViewController
+    participant S as Service
+    participant A as APIClient
+    participant N as Сеть
+    participant L as Laravel API
+
+    V->>S: login(login, password)
+    S->>S: LoginDTO
+    S->>A: request("/auth/login", POST, body, authorized: false)
+    A->>A: URL, Headers (Accept, Content-Type)
+    A->>N: URLSession.data(for: request)
+    N->>L: POST /api/auth/login
+    L-->>N: 200 + JSON { token, user }
+    N-->>A: Data
+    A->>A: decode AuthResponseDTO
+    A-->>S: AuthResponseDTO
+    S->>S: tokenStorage.token = resp.token
+    S-->>V: (success)
+    V->>V: обновление UI
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>Общая архитектура</h2>
+      <div class="flow-text">┌─────────────────────────────────────────────────────────────────────────────┐
+│                           iOS‑клиент (Cafe)                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Presentation (UI)                                                           │
+│  ├── Auth (Login, Register, Forgot)                                          │
+│  ├── Menu (LaravelMenuViewController, ProductDetail)                         │
+│  ├── Cart (CartViewController)                                               │
+│  ├── Profile (ProfileViewController, Addresses, AddAddress)                │
+│  └── Map (MapViewController)                                                 │
+│         │                                                                     │
+│         ▼                                                                     │
+│  Services (бизнес-логика, вызовы API)                                        │
+│  ├── AuthService      → /auth/login, /auth/register, /me, /me/update         │
+│  ├── ProductsService  → /products, /product/{id}, /products/search            │
+│  ├── CartService      → /cart, /cart/items                                   │
+│  ├── AddressService   → /addresses                                           │
+│  └── ProductDetailService → /product/{id}                                    │
+│         │                                                                     │
+│         ▼                                                                     │
+│  APIClient (один слой для всех HTTP‑запросов)                                │
+│  ├── baseURL: https://anton.panfilius.ru/api                                 │
+│  ├── TokenStorage (Keychain) ← после логина: Bearer token                     │
+│  ├── request(path, method, body?, authorized?)                               │
+│  └── Обработка: 200/401/422, JSON decode (DataWrapper / APIResponse / T)     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ HTTPS, JSON, Bearer (если authorized)
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     Backend API (Laravel, anton.panfilius.ru)                │
+└─────────────────────────────────────────────────────────────────────────────┘</div>
+      <h3 style="font-size: 1rem; margin-top: 24px;">Поток запроса (пошагово)</h3>
+      <div class="flow-text">[ViewController] → вызывает метод сервиса
+[Service] → формирует DTO, вызывает APIClient.request(path, method, body, authorized)
+[APIClient] → URL, Headers (Accept, Content-Type, Authorization), body → JSON (snake_case), URLSession.data(for:)
+[Сеть] → HTTPS на https://anton.panfilius.ru/api/...
+[Laravel API] → обрабатывает, возвращает JSON
+[APIClient] → statusCode, decode DataWrapper<T> | APIResponse<T> | T, при 401/422 — APIError
+[Service] → возвращает модель, при логине — сохраняет token в Keychain, при корзине — NotificationCenter
+[ViewController] → обновляет UI</div>
+      <h3 style="font-size: 1rem; margin-top: 24px;">Форматы ответов API</h3>
+      <ul class="formats-list">
+        <li><strong>Успех (2xx):</strong> <code>{"data": T}</code> → разворачивается в T; <code>{"success": true, "data": T}</code> → T; прямой T или [T]</li>
+        <li><strong>401:</strong> тело с полем <code>message</code> → APIError.unauthorized</li>
+        <li><strong>422:</strong> тело с полем <code>errors: { "field": ["msg"] }</code> → APIError.validation</li>
+        <li><strong>Остальные:</strong> → APIError.badStatus(code, message)</li>
+      </ul>
+    </section>
+
+    <section id="screens">
+      <h2>Экраны и вызываемые API</h2>
+      <table>
+        <thead>
+          <tr><th>Экран / действие</th><th>Сервис</th><th>Метод API</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Логин</td><td>AuthService</td><td>POST /auth/login</td></tr>
+          <tr><td>Регистрация</td><td>AuthService</td><td>POST /auth/register</td></tr>
+          <tr><td>Профиль (загрузка)</td><td>AuthService</td><td>GET /me</td></tr>
+          <tr><td>Редактирование профиля</td><td>AuthService</td><td>PUT /me/update</td></tr>
+          <tr><td>Выход</td><td>AuthService</td><td>локально tokenStorage.clear()</td></tr>
+          <tr><td>Меню (список)</td><td>ProductsService</td><td>GET /products</td></tr>
+          <tr><td>Меню (поиск)</td><td>ProductsService</td><td>GET /products/search?query=</td></tr>
+          <tr><td>Карточка товара</td><td>ProductsService / ProductDetailService</td><td>GET /product/{id}</td></tr>
+          <tr><td>Добавить в корзину</td><td>CartService</td><td>POST /cart/items</td></tr>
+          <tr><td>Изменить кол-во в корзине</td><td>CartService</td><td>PATCH /cart/items/{id}</td></tr>
+          <tr><td>Удалить из корзины</td><td>CartService</td><td>DELETE /cart/items/{id}</td></tr>
+          <tr><td>Очистить корзину</td><td>CartService</td><td>DELETE /cart</td></tr>
+          <tr><td>Корзина (загрузка)</td><td>CartService</td><td>GET /cart</td></tr>
+          <tr><td>Список адресов</td><td>AddressService</td><td>GET /addresses</td></tr>
+          <tr><td>Добавить адрес</td><td>AddressService</td><td>POST /addresses</td></tr>
+          <tr><td>Редактировать адрес</td><td>AddressService</td><td>PUT /addresses/{id}</td></tr>
+          <tr><td>Удалить адрес</td><td>AddressService</td><td>DELETE /addresses/{id}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="api-docs">
+      <h2>API (Swagger)</h2>
+      <p style="color: var(--muted); margin-bottom: 20px;">Описание эндпоинтов в формате OpenAPI 3.0. Базовый URL: <code>https://anton.panfilius.ru/api</code></p>
+      <div id="swagger-ui"></div>
+    </section>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#3d424d',
+        primaryTextColor: '#e6e9ef',
+        primaryBorderColor: '#5c6370',
+        lineColor: '#9096a5',
+        secondaryColor: '#252830',
+        tertiaryColor: '#1e2128'
+      }
+    });
+  </script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    (function () {
+      var spec = {
+        "openapi": "3.0.3",
+        "info": {
+          "title": "Cafe API",
+          "description": "API бэкенда приложения Cafe (iOS).",
+          "version": "1.0.0"
+        },
+        "servers": [{ "url": "https://anton.panfilius.ru/api", "description": "Production" }],
+        "tags": [
+          { "name": "auth", "description": "Авторизация и профиль" },
+          { "name": "products", "description": "Товары и меню" },
+          { "name": "cart", "description": "Корзина" },
+          { "name": "addresses", "description": "Адреса доставки" }
+        ],
+        "paths": {
+          "/auth/login": {
+            "post": {
+              "tags": ["auth"],
+              "summary": "Вход",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/LoginRequest" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+                "401": { "description": "Неверный логин/пароль", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageResponse" } } }
+              }
+            }
+          },
+          "/auth/register": {
+            "post": {
+              "tags": ["auth"],
+              "summary": "Регистрация",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+                "422": { "description": "Ошибки валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } }
+              }
+            }
+          },
+          "/me": {
+            "get": {
+              "tags": ["auth"],
+              "summary": "Текущий пользователь",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            }
+          },
+          "/me/update": {
+            "put": {
+              "tags": ["auth"],
+              "summary": "Обновить профиль",
+              "security": [{ "BearerAuth": [] }],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DataUser" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" },
+                "422": { "description": "Ошибки валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } }
+              }
+            }
+          },
+          "/products": {
+            "get": {
+              "tags": ["products"],
+              "summary": "Список товаров",
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } }
+              }
+            }
+          },
+          "/product/{id}": {
+            "get": {
+              "tags": ["products"],
+              "summary": "Товар по ID",
+              "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "oneOf": [{ "$ref": "#/components/schemas/DataProduct" }, { "$ref": "#/components/schemas/Product" }] } } }
+              }
+            }
+          },
+          "/products/search": {
+            "get": {
+              "tags": ["products"],
+              "summary": "Поиск товаров",
+              "parameters": [{ "name": "query", "in": "query", "required": true, "schema": { "type": "string" } }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } }
+              }
+            }
+          },
+          "/cart": {
+            "get": {
+              "tags": ["cart"],
+              "summary": "Получить корзину",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "oneOf": [{ "$ref": "#/components/schemas/DataCart" }, { "$ref": "#/components/schemas/Cart" }] } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            },
+            "delete": {
+              "tags": ["cart"],
+              "summary": "Очистить корзину",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Cart" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            }
+          },
+          "/cart/items": {
+            "post": {
+              "tags": ["cart"],
+              "summary": "Добавить товар в корзину",
+              "security": [{ "BearerAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/CartAddItemRequest" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessMessage" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" },
+                "422": { "description": "Ошибки валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } }
+              }
+            }
+          },
+          "/cart/items/{dessertId}": {
+            "patch": {
+              "tags": ["cart"],
+              "summary": "Изменить количество",
+              "security": [{ "BearerAuth": [] }],
+              "parameters": [{ "name": "dessertId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/CartSetQtyRequest" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessMessage" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            },
+            "delete": {
+              "tags": ["cart"],
+              "summary": "Удалить товар из корзины",
+              "security": [{ "BearerAuth": [] }],
+              "parameters": [{ "name": "dessertId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Cart" } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            }
+          },
+          "/addresses": {
+            "get": {
+              "tags": ["addresses"],
+              "summary": "Список адресов",
+              "security": [{ "BearerAuth": [] }],
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Address" } } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            },
+            "post": {
+              "tags": ["addresses"],
+              "summary": "Создать адрес",
+              "security": [{ "BearerAuth": [] }],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/AddressUpsert" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Address" } } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" },
+                "422": { "description": "Ошибки валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } }
+              }
+            }
+          },
+          "/addresses/{id}": {
+            "put": {
+              "tags": ["addresses"],
+              "summary": "Обновить адрес",
+              "security": [{ "BearerAuth": [] }],
+              "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/AddressUpsert" }
+                  }
+                }
+              },
+              "responses": {
+                "200": { "description": "Успех", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Address" } } } } },
+                "401": { "$ref": "#/components/responses/Unauthorized" },
+                "422": { "description": "Ошибки валидации", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" } } }
+              }
+            },
+            "delete": {
+              "tags": ["addresses"],
+              "summary": "Удалить адрес",
+              "security": [{ "BearerAuth": [] }],
+              "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+              "responses": {
+                "204": { "description": "Успех (без тела)" },
+                "401": { "$ref": "#/components/responses/Unauthorized" }
+              }
+            }
+          }
+        },
+        "components": {
+          "securitySchemes": {
+            "BearerAuth": {
+              "type": "http",
+              "scheme": "bearer",
+              "bearerFormat": "JWT",
+              "description": "Токен после /auth/login или /auth/register"
+            }
+          },
+          "responses": {
+            "Unauthorized": {
+              "description": "Требуется авторизация или неверный токен",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/MessageResponse" }
+                }
+              }
+            }
+          },
+          "schemas": {
+            "LoginRequest": {
+              "type": "object",
+              "required": ["login", "password"],
+              "properties": { "login": { "type": "string" }, "password": { "type": "string", "format": "password" } }
+            },
+            "RegisterRequest": {
+              "type": "object",
+              "required": ["username", "email", "password"],
+              "properties": {
+                "username": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string", "nullable": true },
+                "first_name": { "type": "string", "nullable": true },
+                "last_name": { "type": "string", "nullable": true },
+                "password": { "type": "string", "format": "password" }
+              }
+            },
+            "AuthResponse": {
+              "type": "object",
+              "properties": { "token": { "type": "string" }, "user": { "$ref": "#/components/schemas/User" } }
+            },
+            "User": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "username": { "type": "string", "nullable": true },
+                "email": { "type": "string", "nullable": true },
+                "phone": { "type": "string", "nullable": true },
+                "first_name": { "type": "string", "nullable": true },
+                "last_name": { "type": "string", "nullable": true },
+                "is_staff": { "type": "boolean" },
+                "created_at": { "type": "string", "nullable": true }
+              }
+            },
+            "DataUser": {
+              "type": "object",
+              "properties": { "data": { "$ref": "#/components/schemas/User" } }
+            },
+            "UpdateProfileRequest": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string", "nullable": true },
+                "email": { "type": "string", "nullable": true },
+                "phone": { "type": "string", "nullable": true },
+                "first_name": { "type": "string", "nullable": true },
+                "last_name": { "type": "string", "nullable": true }
+              }
+            },
+            "Product": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" },
+                "category": { "type": "string", "nullable": true },
+                "description": { "type": "string", "nullable": true },
+                "price": { "type": "number", "format": "double" },
+                "photos": { "type": "array", "items": { "type": "string" }, "nullable": true },
+                "available": { "type": "boolean", "nullable": true },
+                "weight": { "type": "number", "nullable": true },
+                "calories": { "type": "integer", "nullable": true },
+                "proteins": { "type": "number", "nullable": true },
+                "fats": { "type": "number", "nullable": true },
+                "carbohydrates": { "type": "number", "nullable": true }
+              }
+            },
+            "DataProduct": {
+              "type": "object",
+              "properties": { "data": { "$ref": "#/components/schemas/Product" } }
+            },
+            "Cart": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "user_id": { "type": "integer" },
+                "items": { "type": "array", "items": { "$ref": "#/components/schemas/CartItem" } },
+                "total": { "type": "integer" }
+              }
+            },
+            "CartItem": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "dessert_id": { "type": "integer" },
+                "qty": { "type": "integer" },
+                "price": { "type": "integer" },
+                "sum": { "type": "integer" },
+                "dessert": { "$ref": "#/components/schemas/CartDessert" }
+              }
+            },
+            "CartDessert": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" },
+                "description": { "type": "string" },
+                "photos": { "type": "array", "items": { "type": "string" }, "nullable": true }
+              }
+            },
+            "DataCart": {
+              "type": "object",
+              "properties": { "data": { "$ref": "#/components/schemas/Cart" } }
+            },
+            "CartAddItemRequest": {
+              "type": "object",
+              "required": ["dessert_id", "qty"],
+              "properties": { "dessert_id": { "type": "integer" }, "qty": { "type": "integer" } }
+            },
+            "CartSetQtyRequest": {
+              "type": "object",
+              "required": ["qty"],
+              "properties": { "qty": { "type": "integer" } }
+            },
+            "SuccessMessage": {
+              "type": "object",
+              "properties": { "success": { "type": "boolean" }, "message": { "type": "string" } }
+            },
+            "Address": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "base_address": { "type": "string" },
+                "entrance": { "type": "string", "nullable": true },
+                "intercom": { "type": "string", "nullable": true },
+                "floor": { "type": "string", "nullable": true },
+                "flat": { "type": "string", "nullable": true },
+                "latitude": { "type": "number", "format": "double" },
+                "longitude": { "type": "number", "format": "double" }
+              }
+            },
+            "AddressUpsert": {
+              "type": "object",
+              "required": ["title", "base_address", "latitude", "longitude"],
+              "properties": {
+                "title": { "type": "string" },
+                "base_address": { "type": "string" },
+                "entrance": { "type": "string", "nullable": true },
+                "intercom": { "type": "string", "nullable": true },
+                "floor": { "type": "string", "nullable": true },
+                "flat": { "type": "string", "nullable": true },
+                "latitude": { "type": "number", "format": "double" },
+                "longitude": { "type": "number", "format": "double" }
+              }
+            },
+            "MessageResponse": {
+              "type": "object",
+              "properties": { "message": { "type": "string" } }
+            },
+            "ValidationErrorResponse": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "errors": {
+                  "type": "object",
+                  "additionalProperties": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      };
+
+      window.onload = function () {
+        window.ui = SwaggerUIBundle({
+          spec: spec,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          layout: 'StandaloneLayout'
+        });
+      };
+    })();
+  </script>
+</body>
+</html>

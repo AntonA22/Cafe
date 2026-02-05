@@ -1,0 +1,684 @@
+# OpenAPI 3.0 — описание API проекта Cafe (Laravel backend)
+# Базовый URL: https://anton.panfilius.ru/api
+
+openapi: 3.0.3
+info:
+  title: Cafe API
+  description: API бэкенда приложения Cafe (iOS). Используется APIClient в iOS-приложении.
+  version: 1.0.0
+
+servers:
+  - url: https://anton.panfilius.ru/api
+    description: Production
+
+tags:
+  - name: auth
+    description: Авторизация и профиль
+  - name: products
+    description: Товары и меню
+  - name: cart
+    description: Корзина
+  - name: addresses
+    description: Адреса доставки
+
+paths:
+  # --- Auth ---
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Вход
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Неверный логин/пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Регистрация
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Ошибки валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /me:
+    get:
+      tags: [auth]
+      summary: Текущий пользователь
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /me/update:
+    put:
+      tags: [auth]
+      summary: Обновить профиль
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Ошибки валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  # --- Products ---
+  /products:
+    get:
+      tags: [products]
+      summary: Список товаров
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /product/{id}:
+    get:
+      tags: [products]
+      summary: Товар по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/DataProduct'
+                  - $ref: '#/components/schemas/Product'
+
+  /products/search:
+    get:
+      tags: [products]
+      summary: Поиск товаров
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  # --- Cart ---
+  /cart:
+    get:
+      tags: [cart]
+      summary: Получить корзину
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/DataCart'
+                  - $ref: '#/components/schemas/Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [cart]
+      summary: Очистить корзину
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /cart/items:
+    post:
+      tags: [cart]
+      summary: Добавить товар в корзину
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartAddItemRequest'
+      responses:
+        '200':
+          description: Успех (часто success/message; клиент затем вызывает GET /cart)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Ошибки валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /cart/items/{dessertId}:
+    patch:
+      tags: [cart]
+      summary: Изменить количество товара в корзине
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dessertId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartSetQtyRequest'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [cart]
+      summary: Удалить товар из корзины
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dessertId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # --- Addresses ---
+  /addresses:
+    get:
+      tags: [addresses]
+      summary: Список адресов
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Address'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [addresses]
+      summary: Создать адрес
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressUpsert'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Ошибки валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /addresses/{id}:
+    put:
+      tags: [addresses]
+      summary: Обновить адрес
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressUpsert'
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Ошибки валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+    delete:
+      tags: [addresses]
+      summary: Удалить адрес
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Успех (без тела)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Токен после /auth/login или /auth/register
+
+  responses:
+    Unauthorized:
+      description: Требуется авторизация или неверный токен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+
+  schemas:
+    # --- Auth ---
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+          format: password
+
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        is_staff:
+          type: boolean
+        created_at:
+          type: string
+          nullable: true
+
+    DataUser:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+
+    # --- Products ---
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+        photos:
+          type: array
+          items:
+            type: string
+          nullable: true
+        available:
+          type: boolean
+          nullable: true
+        weight:
+          type: number
+          nullable: true
+        calories:
+          type: integer
+          nullable: true
+        proteins:
+          type: number
+          nullable: true
+        fats:
+          type: number
+          nullable: true
+        carbohydrates:
+          type: number
+          nullable: true
+
+    DataProduct:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
+
+    # --- Cart ---
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        total:
+          type: integer
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        dessert_id:
+          type: integer
+        qty:
+          type: integer
+        price:
+          type: integer
+        sum:
+          type: integer
+        dessert:
+          $ref: '#/components/schemas/CartDessert'
+
+    CartDessert:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        photos:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    DataCart:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Cart'
+
+    CartAddItemRequest:
+      type: object
+      required: [dessert_id, qty]
+      properties:
+        dessert_id:
+          type: integer
+        qty:
+          type: integer
+          default: 1
+
+    CartSetQtyRequest:
+      type: object
+      required: [qty]
+      properties:
+        qty:
+          type: integer
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    # --- Addresses ---
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        base_address:
+          type: string
+        entrance:
+          type: string
+          nullable: true
+        intercom:
+          type: string
+          nullable: true
+        floor:
+          type: string
+          nullable: true
+        flat:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    AddressUpsert:
+      type: object
+      required: [title, base_address, latitude, longitude]
+      properties:
+        title:
+          type: string
+        base_address:
+          type: string
+        entrance:
+          type: string
+          nullable: true
+        intercom:
+          type: string
+          nullable: true
+        floor:
+          type: string
+          nullable: true
+        flat:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    # --- Common ---
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
